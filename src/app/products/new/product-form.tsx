@@ -1,20 +1,45 @@
-"use-client";
+"use client";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { useForm } from "react-hook-form";
+import { createProduct, updateProduct } from "../products.api";
+import { useParams, useRouter } from "next/navigation";
 
-export default function ProductForm() {
-  const { register, handleSubmit } = useForm();
+export default function ProductForm({ product }: any) {
+  const { register, handleSubmit } = useForm({
+    defaultValues: {
+      name: product?.name,
+      description: product?.description,
+      price: product?.price,
+      image: product?.image,
+    },
+  });
+  const router = useRouter();
+  const params = useParams<{ id: string }>();
+  console.log(params);
 
-  const onSubmit = handleSubmit((data) => {
-    console.log(data);
+  const submitProduct = handleSubmit(async (data) => {
+    if (params?.id) {
+      await updateProduct(params.id, {
+        ...data,
+        price: parseFloat(data.price),
+      });
+    } else {
+      await createProduct({
+        ...data,
+        price: parseFloat(data.price),
+      });
+    }
+
+    router.push("/");
+    router.refresh();
   });
 
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={submitProduct}>
       <Label>Product Name</Label>
       <Input {...register("name")} />
 
@@ -27,7 +52,7 @@ export default function ProductForm() {
       <Label>Image</Label>
       <Input {...register("image")} />
 
-      <Button>Create Product</Button>
+      <Button>{params.id ? "Update Product" : "Create Product"}</Button>
     </form>
   );
 }
